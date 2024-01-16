@@ -1,5 +1,6 @@
 package com.pet.core.process
 
+import com.pet.core.api.Change
 import com.pet.core.api.Changeable
 
 enum class State {
@@ -12,7 +13,7 @@ class StateProperty(
     value: Int,
     private val minState: State,
     private val maxState: State,
-) : Changeable<(State) -> Unit, State> {
+) : Changeable<StateItem, StateChange, (StateChange) -> Unit> {
 
     @Volatile
     private var statValue = value
@@ -20,22 +21,20 @@ class StateProperty(
     @Volatile
     private var state = getState(statValue)
 
-    private val onChangeListeners: MutableList<(newState: State) -> Unit> = arrayListOf()
+    private val onChangeListeners: MutableList<(newState: StateChange) -> Unit> = arrayListOf()
 
     fun adjustValue(value: Int) {
+        val oldValue = StateItem(statValue, state)
         statValue = add(statValue, value)
-        val oldValue = state
         state = getState(statValue)
-        if (oldValue != state) {
-            update(state)
-        }
+        update(StateChange(oldValue, StateItem(statValue, state)))
     }
 
     fun getInfo() = StateItem(statValue, state)
 
-    override fun addOnChangeListener(listener: (newState: State) -> Unit) = onChangeListeners.add(listener)
+    override fun addOnChangeListener(listener: (change: StateChange) -> Unit) = onChangeListeners.add(listener)
 
-    override fun update(newValue: State) = onChangeListeners.forEach { it.invoke(newValue) }
+    override fun update(change: StateChange) = onChangeListeners.forEach { it.invoke(change) }
 
     private fun getState(value: Int): State {
         val percent = 100 / Stats.MAX_STATS_VALUE * value
@@ -66,3 +65,5 @@ data class StateInfo(
     val health: StateItem,
     val food: StateItem,
 )
+
+class StateChange(oldValue: StateItem, newValue: StateItem) : Change<StateItem>(oldValue, newValue)

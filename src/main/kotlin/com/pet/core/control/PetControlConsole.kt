@@ -13,7 +13,11 @@ class PetControlConsole(stat: Stats) : PetControl {
 
     init {
         pet.addOnChangeListener {
-            when (it) {
+            if (it.newValue.state == it.oldValue.state) {
+                return@addOnChangeListener
+            }
+
+            when (it.newValue.state) {
                 State.ILL -> {
                     showMessage("I'm not well :(((")
                 }

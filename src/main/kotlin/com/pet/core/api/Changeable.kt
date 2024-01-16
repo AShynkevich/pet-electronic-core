@@ -2,16 +2,18 @@ package com.pet.core.api
 
 import com.pet.core.process.Event
 
-interface Changeable<T, K> {
+open class Change<T>(val oldValue: T, val newValue: T)
 
-    fun addOnChangeListener(listener: T): Boolean
+interface Changeable<Type, K : Change<Type>, Listener> {
 
-    fun update(newValue: K)
+    fun addOnChangeListener(listener: Listener): Boolean
+
+    fun update(change: K)
 }
 
-interface Eventable<T, K: Event> {
+interface Eventable<T, K : Event> {
 
     fun addOnEventListener(callback: T): Boolean
 
-    fun fire(newValue: K)
+    fun fire(event: K)
 }

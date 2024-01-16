@@ -8,12 +8,12 @@ import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 class Pet(stats: Stats) :
-    Changeable<(state: State) -> Unit, State>,
+    Changeable<StateItem, StateChange, (change: StateChange) -> Unit>,
     Eventable<(event: Event) -> Unit, Event> {
     val name = stats.name
 
     private val statsToAffect = listOf(StatsAffect.FOOD, StatsAffect.HEALTH, StatsAffect.MOOD)
-    private val onStateChangeListeners: MutableList<(state: State) -> Unit> = arrayListOf()
+    private val onStateChangeListeners: MutableList<(state: StateChange) -> Unit> = arrayListOf()
     private val onEventListeners: MutableList<(event: Event) -> Unit> = arrayListOf()
 
     @Volatile
@@ -69,14 +69,14 @@ class Pet(stats: Stats) :
 
     override fun addOnEventListener(callback: (event: Event) -> Unit) = onEventListeners.add(callback)
 
-    override fun fire(newValue: Event) = onEventListeners.forEach { it.invoke(newValue) }
+    override fun fire(event: Event) = onEventListeners.forEach { it.invoke(event) }
 
-    override fun addOnChangeListener(listener: (state: State) -> Unit) = onStateChangeListeners.add(listener)
+    override fun addOnChangeListener(listener: (state: StateChange) -> Unit) = onStateChangeListeners.add(listener)
 
-    override fun update(newValue: State) = onStateChangeListeners.forEach { it.invoke(newValue) }
+    override fun update(change: StateChange) = onStateChangeListeners.forEach { it.invoke(change) }
 
     private fun mainLoop() {
-        val onChangeCallBack: (State) -> Unit = { newState ->
+        val onChangeCallBack: (StateChange) -> Unit = { newState ->
             update(newState)
         }
         mood.addOnChangeListener(onChangeCallBack)
